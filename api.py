@@ -8,44 +8,36 @@ collection = mongo.db.data
 
 class TopWords(Resource):
     def get(self):
-        resp = collection.aggregate([
-            {"$match": {
-                "text": { "$not": {"$size": 0} }
-                }
-            },
-            {"$unwind": "$text" },
-            {"$group": {
-                "_id": {"$toLower": "$text"},
-                "count": { "$sum": 1 }
-                }
-            },
-            {"$match": {
-                "count": { "$gte": 2 }
-                }
-            },
-            { "$sort" : { "count" : -1} },
-            { "$limit" : 100 }
+        result = collection.aggregate([
+            {"$match": {"text": {"$not": {"$size": 1}}}},
+            {"$group": {"_id": "$text","count": { "$sum": 1}}},
+            {"$match": {"count": { "$gte": 1 }}},
+            { "$sort" : { "count" : -1}}
         ])
 
-        # field = {"text":1, "_id":0}
-        # query = collection.find(
-        #     {"$text":{"$search":"makan"}},
-        #     field
-        # )
-        for key in resp:
-            dict(key)
-            print('{}: {}'.format(key.value, key.value))
-
-        return dumps(resp)
+        response = [dumps(value.values()) for value in result]
+        
+        return response
 
 class Users(Resource):
     def get(self):
-        result = collection.find({"fromuser": {"$gt": 1}})
-        return dumps(result)
+        result = collection.aggregate([
+            {'$group': {'_id': '$fromuser', 'count': {'$sum': 1}}},
+            {'$sort': {'count': -1}}
+        ])
+        response = [dumps(value.values()) for value in result]
+        
+        return response
 
 class Mentions(Resource):
     def get(self):
-        collection.find()
+        result = collection.aggregate([
+            {'$group': {'_id': '$mentions', 'count': {'$sum': 1}}},
+            {'$sort': {'count': -1}}
+        ])
+        response = [dumps(value.values()) for value in result]
+        
+        return response
 
 class Hourly(Resource):
     def get(self):

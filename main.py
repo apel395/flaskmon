@@ -16,5 +16,6 @@ api.add_resource(Hourly, '/hourly')
 def home():
     return('good eve')
 
+
 if __name__ == '__main__':
     app.run(debug=True)
