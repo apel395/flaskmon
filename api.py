@@ -1,5 +1,7 @@
 from flask_restful import Resource
 from bson.json_util import dumps
+from flask import jsonify
+
 
 from db import mongo
 
@@ -9,13 +11,13 @@ collection = mongo.db.data
 class TopWords(Resource):
     def get(self):
         result = collection.aggregate([
-            {"$match": {"text": {"$not": {"$size": 1}}}},
-            {"$group": {"_id": "$text","count": { "$sum": 1}}},
-            {"$match": {"count": { "$gte": 1 }}},
-            { "$sort" : { "count" : -1}}
+            {"$project": {"text": {"$split": ["$text", " "]}}},
+            {"$unwind": "$text"},
+            {"$group": {"_id": "$text", "count": {"$sum": 1}}},
+            { "$sort" : { "text" : -1}}
         ])
-
         response = [dumps(value.values()) for value in result]
+        print(len(response))
         
         return response
 
