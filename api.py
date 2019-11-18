@@ -14,7 +14,7 @@ class TopWords(Resource):
             {"$project": {"text": {"$split": ["$text", " "]}}},
             {"$unwind": "$text"},
             {"$group": {"_id": "$text", "count": {"$sum": 1}}},
-            { "$sort" : { "text" : -1}}
+            { "$sort" : { "count" : -1}}
         ])
         response = [dumps(value.values()) for value in result]
         print(len(response))
@@ -43,5 +43,11 @@ class Mentions(Resource):
 
 class Hourly(Resource):
     def get(self):
-        resp = collection.distinct("text", {"fromuser": "farn_a"})
-        return dumps(resp)
+        result = collection.aggregate([
+            {'$project': {'createdat': {'$toDate':'$createdat'}}},
+            {'$group': {'_id': '$createdat', 'count': {'$sum': 1}}},
+            {'$sort': {'count': +1}}
+        ])
+        response = [dumps(value.values()) for value in result]
+
+        return response
