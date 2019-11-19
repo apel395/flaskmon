@@ -1,13 +1,13 @@
 from flask_restful import Resource
-from bson.json_util import dumps
-from flask import jsonify
-import datetime
+from datetime import datetime
 
 
 from db import mongo
 
 
 collection = mongo.db.data
+epoch = datetime.fromtimestamp
+        
 
 class TopWords(Resource):
     def get(self):
@@ -15,45 +15,47 @@ class TopWords(Resource):
             {"$project": {"text": {"$split": ["$text", " "]}}},
             {"$unwind": "$text"},
             {"$group": {"_id": "$text", "count": {"$sum": 1}}},
-            { "$sort" : { "count" : -1}}
+            {"$sort" : { "count" : -1}}
         ])
-        response = [dumps(value.values()) for value in result]
-        print(len(response))
-        
-        return response
+        response = [{dict(r).get("_id"): dict(r).get("count")} for r in result]
+
+        return {"topwords": response}
 
 class Users(Resource):
     def get(self):
         result = collection.aggregate([
-            {'$group': {'_id': '$fromuser', 'count': {'$sum': 1}}},
-            {'$sort': {'count': -1}}
+            {"$group": {"_id": "$fromuser", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
         ])
-        response = [dumps(value.values()) for value in result]
+        response = [{dict(r).get("_id"): dict(r).get("count")} for r in result]
         
-        return response
+        return {"users": response}
 
 class Mentions(Resource):
     def get(self):
         result = collection.aggregate([
-            {'$group': {'_id': '$mentions', 'count': {'$sum': 1}}},
-            {'$sort': {'count': -1}}
+            {"$group": {"_id": "$mentions", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
         ])
-        response = [dumps(value.values()) for value in result]
-        
-        return response
+        response = [{str(dict(r).get("_id")): dict(r).get("count")} for r in result]
+
+        return {"mentions": response}
 
 class Hourly(Resource):
     def get(self):
+        date = collection.distinct("createdat")
+        text = collection.distinct("text")
 
-        # result = collection.aggregate([
-        #     {'$project': {'createdat': {'$toDate': '$createdat'}}},
-        #     {'$group': {'_id': '$createdat', 'count': {'$sum': 1}}},
-        #     {'$sort': {'count': +1}}
-        # ])
+        time = [epoch(int(i)).hour for i in date]
 
-        date = collection.distinct('createdat')
+        result = collection.aggregate([
+            # {"$project": {"createdat": {"$toDate": "$createdat"}}},
+            # {'$match': {'createdat': {'$lte': "ISODate('1371324588')", '$gte': "ISODate('1371311470')"}}},
+            {"$group": {"_id": "$text", "createdat":{'$sum': 1} }},
+            {"$sort": {"createdat": -1}},
+            # {"$project": {"createdat": 0}}
+        ])
         
-        time = [datetime.datetime.fromtimestamp(int(i)) for i in date]
-        print(type(date))
-
-        return jsonify({t:'fap {} fap'.format(t) for t in date})
+        # print(type(result))
+        return [{str(r): t} for r,t in zip(date,time)]
+        # return jsonify({str(t): str(r) for t,r in zip(time, result)})
