@@ -1,29 +1,29 @@
-running local
+# running local
 
 
-#import json to mongodb
-```
+## import json to mongodb
+```bash
 mongoimport --db datadb --collection data --file datasetfinal.json
 ```
 
-#create & activate environment
-##in osx
-```
+## create & activate environment
+### in osx
+```bash
 virtualenv env -p /usr/bin/python3 && source env/bin/activate
 ```
-#in windows os
+### in windows os
 ```
 virtualenv env
-env\Script\activate
+env\Scripts\activate
 ```
 
-#install requirements
-```
+# install requirements
+```bash
 pip install -r requirements.txt
 ```
 
-#run app
+# run app
 
-```
+```bash
 python main.py
 ```
