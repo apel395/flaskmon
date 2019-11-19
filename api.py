@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from bson.json_util import dumps
 from flask import jsonify
+import datetime
 
 
 from db import mongo
@@ -43,11 +44,16 @@ class Mentions(Resource):
 
 class Hourly(Resource):
     def get(self):
-        result = collection.aggregate([
-            {'$project': {'createdat': {'$toDate':'$createdat'}}},
-            {'$group': {'_id': '$createdat', 'count': {'$sum': 1}}},
-            {'$sort': {'count': +1}}
-        ])
-        response = [dumps(value.values()) for value in result]
 
-        return response
+        # result = collection.aggregate([
+        #     {'$project': {'createdat': {'$toDate': '$createdat'}}},
+        #     {'$group': {'_id': '$createdat', 'count': {'$sum': 1}}},
+        #     {'$sort': {'count': +1}}
+        # ])
+
+        date = collection.distinct('createdat')
+        
+        time = [datetime.datetime.fromtimestamp(int(i)) for i in date]
+        print(type(date))
+
+        return jsonify({t:'fap {} fap'.format(t) for t in date})
