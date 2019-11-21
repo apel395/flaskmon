@@ -7,7 +7,7 @@ mongoimport --db datadb --collection data --file datasetfinal.json
 ```
 
 ## create & activate environment
-### in osx
+### in linux
 ```bash
 virtualenv env -p /usr/bin/python3 && source env/bin/activate
 ```
