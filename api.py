@@ -1,5 +1,6 @@
 from flask_restful import Resource
 from datetime import datetime
+import collections, functools, operator
 
 
 from db import mongo
@@ -44,18 +45,13 @@ class Mentions(Resource):
 class Hourly(Resource):
     def get(self):
         date = collection.distinct("createdat")
-        text = collection.distinct("text")
-
         time = [epoch(int(i)).hour for i in date]
-
         result = collection.aggregate([
-            # {"$project": {"createdat": {"$toDate": "$createdat"}}},
-            # {'$match': {'createdat': {'$lte': "ISODate('1371324588')", '$gte': "ISODate('1371311470')"}}},
-            {"$group": {"_id": "$text", "createdat":{'$sum': 1} }},
-            {"$sort": {"createdat": -1}},
-            # {"$project": {"createdat": 0}}
+            {"$group": {"_id": "$createdat", "text":{'$sum': 1} }},
         ])
-        
-        # print(type(result))
-        return [{str(r): t} for r,t in zip(date,time)]
-        # return jsonify({str(t): str(r) for t,r in zip(time, result)})
+        final = [{str(t): dict(r)['text']} for t,r in zip(time,result)]
+        response = dict(functools.reduce(operator.add, map(collections.Counter, final))) 
+        sortdict = collections.OrderedDict(sorted(response.items()))
+        responsef = [{k: v} for k,v in sortdict.items()]
+
+        return {'hourly': responsef}
